@@ -1,0 +1,71 @@
+clear
+close all
+clc
+% SKT - full cross diffusion system 
+% u_t=Lap((d+d12 v) u)+(r1-a1 u -b1 v)u
+% v_t=Lap((d+d21 u) v)+(r2-b2 u -a1 v)v
+% !! d1=d2=d bifurcation parameter
+%% 1 - creating a clear working space and setting pde2path
+cFolPath='/Users/cinziasoresina/Google Drive/UniversityAndWorks/TUM/pde2path/pde2path/myworks/SKT_GitHub/Fig9';%working folder
+cd('/Users/cinziasoresina/Google Drive/UniversityAndWorks/TUM/pde2path/pde2path')%pde2path folder
+
+setpde2path
+close all
+edtSvc=com.mathworks.mlservices.MLEditorServices; 
+edtList=edtSvc.getEditorApplication.getOpenEditors.toArray;
+for k=1:length(edtList)
+    [~, fname]=fileparts(char(edtList(k).getLongName.toString));
+    edt.(fname)=edtList(k);
+end
+edt.setpde2path.closeNoPrompt % close setpde2path.m
+cd(cFolPath)
+keep pphome cFolPath
+clc
+%% 2 - initialising the problem
+p=[];
+% 'd','d12','d21','r1','r2','a1','a2','b1','b2'
+par=[0.4,3,20,2,5,1,1,0.5,3]';%strong competition, Mimura
+lx=0.5;  % domain (interval)
+p=sktX1Dinit(p,lx,25,par); 
+p.Om=2*lx;
+p=setfn(p,'hom_branch'); % current directory
+%% 3 - contiunation of the trivial branch
+p=cont(p,500); % continuation for a maximum of x steps
+%% 4 - switch to periodic branch and continuation with fold detection
+nmax=1000;
+p=swibra('hom_branch','bpt1','bpt1_up',1e-2);p.nc.dsmax=1e-2; p=cont(p,nmax);
+p=swibra('hom_branch','bpt1','bpt1_down',-1e-2);p.nc.dsmax=1e-2; p=cont(p,nmax);
+%%
+p=swibra('hom_branch','bpt2','bpt2_up',1e-2);p.nc.dsmax=1e-2; p=cont(p,nmax);
+p=swibra('hom_branch','bpt2','bpt2_down',-1e-2);p.nc.dsmax=1e-2; p=cont(p,nmax); 
+%% 
+nmax=300;
+p=swibra('hom_branch','bpt3','bpt3_up',1e-2);p.nc.dsmax=1e-2;p=cont(p,nmax);
+p=swibra('hom_branch','bpt3','bpt3_down',-1e-2);p.nc.dsmax=1e-2; p=cont(p,nmax); 
+%% Postprocessing, first plot BifDiagram 
+nfig=9;
+figure(nfig);
+clf(nfig); 
+cmp=0; %||u||
+box on
+hold on
+plotbra('hom_branch',nfig,cmp,'cl','k'); 
+plotbra('bpt1_up',nfig,cmp,'cl','b');
+plotbra('bpt2_down',nfig,cmp,'cl','r');
+plotbra('bpt3_down',nfig,cmp,'cl','g');
+xlabel('d')
+ylabel('||u||_{L^2}')
+%axis([0 0.35 1 2])
+
+nfig=91;
+figure(nfig);
+clf(nfig); 
+cmp=4; %||v||
+box on
+hold on
+plotbra('hom_branch',nfig,cmp,'cl','k'); 
+plotbra('bpt1_up',nfig,cmp,'cl','b');
+plotbra('bpt2_down',nfig,cmp,'cl','r');
+plotbra('bpt3_down',nfig,cmp,'cl','g');
+xlabel('d')
+ylabel('||v||_{L^2}')
