@@ -1,0 +1,100 @@
+clear
+close all
+clc
+% SKT - triangular cross diffusion system
+% steady state solutions
+% Lap[(d1+alpha u2)u1]+(r1-a1u1-b1u2)u1=0
+% d2 Lap u2           +(r2-b2u1-a2u2)u2=0
+% !! d1=d2=d bifurcation parameter
+%% 1 - creating a clear working space and setting pde2path
+cFolPath='/Users/cinziasoresina/Google Drive/UniversityAndWorks/TUM/pde2path/pde2path/myworks/SKT_GitHub/Fig3';
+cd('/Users/cinziasoresina/Google Drive/UniversityAndWorks/TUM/pde2path/pde2path')
+setpde2path
+edtSvc=com.mathworks.mlservices.MLEditorServices; 
+edtList=edtSvc.getEditorApplication.getOpenEditors.toArray;
+for k=1:length(edtList)
+    [~, fname]=fileparts(char(edtList(k).getLongName.toString));
+    edt.(fname)=edtList(k);
+end
+edt.setpde2path.closeNoPrompt % close setpde2path.m
+cd(cFolPath)
+close all
+keep pphome cFolPath
+clc
+%% 2 - initialising the problem
+p=[];
+% Parameters (1st set in Table 1, weak competition)
+% 'd','d12','r1','r2','a1','a2','b1','b2'
+par=[0.04,3,5,2,3,3,1,1]';
+lx=0.5;  % domain (interval)
+p=sktX1Dinit(p,lx,200,par); 
+p=setfn(p,'hom_branch'); % current directory
+p.Om=2*lx; %domain lenght
+%% 3 - contiunation of the trivial branch
+p=cont(p,120); % continuation for a maximum of x steps
+%% 4 - switch to periodic branch and continuation with fold detection
+p=swibra('hom_branch','bpt1','bpt1',1e-2); p.nc.dsmax=1e-2; p=cont(p,100);
+%%
+npmax=1000;
+p=swibra('hom_branch','bpt2','bpt2_up',1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+p=swibra('hom_branch','bpt2','bpt2_down',-1e-2); p.nc.dsmax=1e-2;p=cont(p,npmax); 
+p=swibra('hom_branch','bpt3','bpt3_up',-1e-2); p.nc.dsmax=1e-2;p=cont(p,npmax);
+p=swibra('hom_branch','bpt3','bpt3_down',1e-2); p.nc.dsmax=1e-2;p=cont(p,npmax);
+p=swibra('hom_branch','bpt4','bpt4_up',1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+p=swibra('hom_branch','bpt4','bpt4_down',-1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+npmax=150;
+p=swibra('hom_branch','bpt5','bpt5_up',-1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+p=swibra('hom_branch','bpt5','bpt5_down',1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+p=swibra('hom_branch','bpt6','bpt6_up',1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+p=swibra('hom_branch','bpt6','bpt6_down',-1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax);
+npmax=400;
+p=swibra('bpt2_up','bpt1','b2d',-1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax); 
+npmax=700;
+p=swibra('bpt4_up','bpt1','b4u',1e-2); p.nc.dsmax=1e-2; p=cont(p,npmax); 
+%% Postprocessing, first plot BifDiagram
+% Figure 3.1
+nfig=31;
+figure(31)
+cmp=2; %v(0)
+box on
+hold on
+plotbra('hom_branch',nfig,cmp,'cl','k'); 
+plotbra('bpt1',nfig,cmp,'cl','b'); 
+plotbra('bpt2_down',nfig,cmp,'cl','r'); 
+plotbra('bpt2_up',nfig,cmp,'cl','r');
+plotbra('bpt3_down',nfig,cmp,'cl','g'); 
+plotbra('bpt3_up',nfig,cmp,'cl','g');
+plotbra('bpt4_down',nfig,cmp,'cl',[1 0.75 0]);%y 
+plotbra('bpt4_up',nfig,cmp,'cl',[1 0.75 0]);%y
+plotbra('bpt6_down',nfig,cmp,'cl',[0.6 0.2 0.8]); 
+plotbra('bpt6_up',nfig,cmp,'cl',[0.6 0.2 0.8]);
+plotbra('bpt5_down',nfig,cmp,'cl','c'); 
+plotbra('bpt5_up',nfig,cmp,'cl','c');
+plotbra('b2d',nfig,cmp,'cl','m');
+plotbra('b4u',nfig,cmp,'cl',[255 128 0]/255);
+xlabel('d')
+ylabel('v(-l_x)')
+axis([0 0.04 0 0.45])
+% Figure 3.2
+nfig=32;
+figure(32)
+cmp=0; %||u||
+box on
+hold on
+plotbra('hom_branch',nfig,cmp,'cl','k'); 
+plotbra('bpt1',nfig,cmp,'cl','b'); 
+plotbra('bpt2_down',nfig,cmp,'cl','r'); 
+plotbra('bpt2_up',nfig,cmp,'cl','r');
+plotbra('bpt3_down',nfig,cmp,'cl','g'); 
+plotbra('bpt3_up',nfig,cmp,'cl','g');
+plotbra('bpt4_down',nfig,cmp,'cl',[1 0.75 0]);%y 
+plotbra('bpt4_up',nfig,cmp,'cl',[1 0.75 0]);%y
+plotbra('bpt5_down',nfig,cmp,'cl','c'); 
+plotbra('bpt5_up',nfig,cmp,'cl','c');
+plotbra('bpt6_down',nfig,cmp,'cl',[0.6 0.2 0.8]); %violet
+plotbra('bpt6_up',nfig,cmp,'cl',[0.6 0.2 0.8]); %violet
+plotbra('b2d',nfig,cmp,'cl','m');%magenta
+plotbra('b4u',nfig,cmp,'cl',[255 128 0]/255); %orange
+xlabel('d')
+ylabel('||u||_{L^2}')
+axis([0 0.04 1.15 1.65])
